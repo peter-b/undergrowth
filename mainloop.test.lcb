@@ -1,0 +1,20 @@
+module _.test.mainloop
+
+use _.callback0
+use _.mainloop0
+
+private variable sTestIdleVar
+private handler TestIdle_Callback(inout xSource)
+	put true into sTestIdleVar
+	U_MainLoopQuit()
+	return false
+end handler
+
+public handler TestIdle()
+	put false into sTestIdleVar
+	U_MainLoopAddIdle(TestIdle_Callback)
+	U_MainLoopRun()
+	test "idle" when sTestIdleVar
+end handler
+
+end module

@@ -1,0 +1,283 @@
+module _.mainloop0
+
+use _.log0
+use _.callback0
+
+--==============================================================
+-- PUBLIC
+--==============================================================
+
+----------------------------------------------------------------
+-- Types
+----------------------------------------------------------------
+
+public type U_MainLoopSourceId is Number
+
+----------------------------------------------------------------
+-- Handlers
+----------------------------------------------------------------
+
+public handler U_MainLoopRun() returns nothing
+	Run()
+end handler
+
+public handler U_MainLoopQuit() returns nothing
+	Quit()
+end handler
+
+public handler U_MainLoopAddIdle(in pCallback as U_Callback) returns nothing
+	AddIdle(pCallback)
+end handler
+
+--==============================================================
+-- PRIVATE
+--==============================================================
+
+----------------------------------------------------------------
+-- Constants
+----------------------------------------------------------------
+
+-- Source priorities
+constant kPriorityNormal is 0
+constant kPriorityIdle is -1
+
+constant kPriorities is [0, -1]
+
+----------------------------------------------------------------
+-- State
+----------------------------------------------------------------
+
+-- Count of how many recursive main loops are running
+private variable sDepth as optional Number
+
+-- List of event sources
+private variable sSources as optional List
+
+-- Timeout to use when polling this time
+private variable sTimeout as optional Number
+
+----------------------------------------------------------------
+-- Initialization
+----------------------------------------------------------------
+
+private handler Initialize() returns nothing
+
+	if sDepth is nothing then
+		put 0 into sDepth
+	end if
+
+	if sSources is nothing then
+		put [] into sSources
+	end if
+
+	if sTimeout is nothing then
+		put -1 into sTimeout
+	end if
+
+end handler
+
+----------------------------------------------------------------
+-- Idle sources
+----------------------------------------------------------------
+
+-- Idle sources are always ready to dispatch
+private handler __IdlePrepare(inout xSource as SourceInfo, \
+		out rTimeout as Number) returns Boolean
+	put 0 into rTimeout
+	return true
+end handler
+
+private handler AddIdle(in pCallback as U_Callback) returns nothing
+	variable tSourceInfo as SourceInfo
+	put the empty array into tSourceInfo
+	
+	put pCallback into tSourceInfo["Callback"]
+	put kPriorityIdle into tSourceInfo["Priority"]
+	put __IdlePrepare into tSourceInfo["Prepare"]
+
+	AddSource(tSourceInfo)
+end handler
+
+----------------------------------------------------------------
+-- Event sources
+----------------------------------------------------------------
+
+private type SourceInfo is Array
+
+private handler type SourcePrepareFunc(inout xSource as SourceInfo, \
+	out rTimeout as Number) returns Boolean
+
+-- Add a source to the list of event sources
+private handler AddSource(in pSourceInfo as Array) returns nothing
+	Initialize()
+	push pSourceInfo onto sSources
+end handler
+
+-- Remove sources by their position in the source list.
+private handler SourceRemoveWithIndices(in pIndices as List) returns nothing
+	variable tIndex
+	repeat with tIndex from 1 up to the number of elements in pIndices
+		delete element (pIndices[tIndex] - tIndex + 1) of sSources
+	end repeat
+end handler
+
+-- Prepare a source for dispatch.  If the source doesn't specify a
+-- prepare function, assume that it's not ready to dispatch and is
+-- happy to block forever.
+private handler SourcePrepare(inout xSource as SourceInfo, \
+		out rTimeout as Number) returns Boolean
+
+	variable tPrepareFunc as SourcePrepareFunc
+	variable tReady as Boolean
+
+	if "Prepare" is among the keys of xSource then
+		put xSource["Prepare"] into tPrepareFunc
+		put tPrepareFunc(xSource, rTimeout) into tReady
+	else
+		put -1 into rTimeout
+		put false into tReady
+	end if
+
+	put tReady into xSource["__Ready"]
+	return tReady
+end handler
+
+private handler SourceDispatch(inout xSource as SourceInfo) returns Boolean
+	return U_CallbackDispatch(xSource["Callback"], xSource)
+end handler
+
+----------------------------------------------------------------
+-- Iteration phases
+----------------------------------------------------------------
+
+private handler IterationPrepare() returns Boolean
+	U_Debug("[mainloop] Prepare")
+
+	variable tAnyReady as Boolean
+	put false into tAnyReady
+	variable tEarliestTimeout as Number
+	put -1 into tEarliestTimeout
+
+	variable tIndex as Number
+	repeat with tIndex from 1 up to the number of elements in sSources
+		variable tIsSourceReady as Boolean
+		variable tSourceTimeout as Number
+
+		put SourcePrepare(sSources[tIndex], tSourceTimeout) into tIsSourceReady
+
+		if tEarliestTimeout < 0 or \
+				tSourceTimeout < tEarliestTimeout then
+			put tSourceTimeout into tEarliestTimeout
+		end if
+
+		if tIsSourceReady then
+			put true into tAnyReady
+		end if
+	end repeat
+
+	-- If there are any sources ready to dispatch, don't block
+	if not tAnyReady then
+		put tEarliestTimeout into sTimeout
+	else
+		put 0 into sTimeout
+	end if
+
+	return tIsSourceReady
+end handler
+
+private handler IterationPoll() returns Boolean
+	U_Warning("[mainloop] Polling not implemented")
+	return true
+end handler
+
+private handler IterationDispatch() returns Boolean
+	U_Debug("[mainloop] Dispatch")
+
+	variable tPriority as Number
+	variable tIndex
+
+	variable tIndicesToRemove as List
+	put [] into tIndicesToRemove
+
+	variable tDispatched
+	put false into tDispatched
+
+	repeat for each element tPriority in kPriorities
+		repeat with tIndex from 1 up to the number of elements in sSources
+
+			-- Skip sources that are either at the wrong priority or not
+			-- ready to be dispatched yet.
+			if sSources[tIndex]["Priority"] is not tPriority or \
+					not sSources[tIndex]["__Ready"] then
+				next repeat
+			end if
+
+			-- This source *can* be dispatched
+			put true into tDispatched
+
+			-- Keep track of sources that should be removed
+			if not SourceDispatch(sSources[tIndex]) then
+				push tIndex onto tIndicesToRemove
+			end if
+
+		end repeat
+
+		-- We only dispatch at one priority level per iteration; if any
+		-- source could be dispatched at this priority, then stop
+		-- dispatching
+		if tDispatched then
+			exit repeat
+		end if
+	end repeat
+
+	-- Remove any sources that are finished with
+	SourceRemoveWithIndices(tIndicesToRemove)
+
+	return tDispatched
+end handler
+
+----------------------------------------------------------------
+-- Main loop entry & exit
+----------------------------------------------------------------
+
+private handler Run() returns nothing
+	variable tLoopDepth as Number
+
+	Initialize()
+
+	put sDepth into tLoopDepth
+	add 1 to sDepth
+
+	repeat while sDepth > tLoopDepth
+
+		-- Check there are actual sources
+		if the number of elements in sSources is 0 then
+			U_Debug("[mainloop] No event sources")
+			subtract 1 from sDepth
+			exit repeat
+		end if
+
+		-- Prepare all sources for polling
+		IterationPrepare()
+
+		-- Poll with the specified timeout
+		IterationPoll()
+
+		-- Dispatch any sources that are ready
+		IterationDispatch()
+
+	end repeat
+
+end handler
+
+private handler Depth() returns Number
+	return sDepth
+end handler
+
+private handler Quit() returns nothing
+	if sDepth > 0 then
+		subtract 1 from sDepth
+	end if
+end handler
+
+end module

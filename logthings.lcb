@@ -1,0 +1,38 @@
+module __.tests.callback
+
+use __.log0
+use __.callback0
+
+private handler ThunkCallback(inout xInfo)
+	put "World" into xInfo
+end handler
+
+public handler TestThunkCallback()
+	variable tCallback as U_Callback
+	put ThunkCallback into U_Callback
+
+	variable tInfo as String
+	put "Hello" into tInfo
+
+	U_CallbackDispatch(tCallback, tInfo)
+
+	test "mutating info callback" when tInfo is "World"
+end handler
+
+private handler MutatingCallback(inout xInfo, inout xContext)
+	put "World" into xContext
+end handler
+
+public handler TestContextCallback()
+	variable tCallback as U_Callback
+	put [MutatingCallback, "Hello"] into tCallback
+
+	variable tInfo as String
+	put "" into tInfo
+
+	U_CallbackDispatch(tCallback, tInfo)
+
+	test "mutating context callback" when tCallback is "World"
+end handler
+
+end module

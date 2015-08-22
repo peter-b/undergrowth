@@ -1,0 +1,45 @@
+module _._util
+
+use com.livecode.foreign
+
+----------------------------------------------------------------
+-- Workaround string formatting issues
+----------------------------------------------------------------
+
+public handler __U_FormatInt(in pNumber as Number) returns String
+	variable tNumberString
+
+	put pNumber formatted as string into tNumberString
+
+	if "." is in tNumberString then
+		variable tDotOffset
+		put the first offset of "." in tNumberString into tDotOffset
+		delete char tDotOffset to (the number of chars in tNumberString) of tNumberString
+	end if
+
+	return tNumberString
+end handler
+
+----------------------------------------------------------------
+-- UTF-8 encoding/decoding
+----------------------------------------------------------------
+
+-- FIXME this should use proper LiveCode builder syntax for string
+-- encoding/decoding.
+
+foreign handler MCStringEncode(in Source as String, in Encoding as CInt, in IsExternalRep as CBool, out Encoded as Data) returns CBool binds to "<builtin>"
+foreign handler MCStringDecode(in Encoded as Data, in Encoding as CInt, in IsExternalRep as CBool, out Result as String) returns CBool binds to "<builtin>"
+
+public handler __U_EncodeUTF8(in pString as String) returns Data
+	variable tEncoded as Data
+	MCStringEncode(pString, 4 /* UTF-8 */, false, tEncoded)
+	return tEncoded
+end handler
+
+public handler __U_DecodeUTF8(in pData as Data) returns String
+	variable tString as String
+	MCStringDecode(pData, 4 /* UTF-8 */, false, tString)
+	return tString
+end handler
+
+end module
