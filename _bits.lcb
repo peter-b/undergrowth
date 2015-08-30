@@ -1,0 +1,83 @@
+/*
+
+Bit packing -- converting integers to byte arrays.  This (rather
+horrible) module will go away once LCB provides its own syntax for
+doing this.
+
+*/
+
+module _._bits
+
+use com.livecode.foreign
+use _.log0
+use _._util
+
+public handler __U_PackInt32(in pVal as Int32) returns Data
+	return PackInt(pVal, 4)
+end handler
+public handler __U_UnpackInt32(in pData as Data) returns Int32
+	return UnpackInt(pData, 4)
+end handler
+
+-- FIXME LCB doesn't have an Int16 type yet.
+public handler __U_PackInt16(in pVal as Int32) returns Data
+	return PackInt(pVal, 2)
+end handler
+public handler __U_UnpackInt16(in pData as Data) returns Int32
+	return UnpackInt(pData, 2)
+end handler
+
+----------------------------------------------------------------
+
+private handler PackInt(in pVal as Number, in pCount as Number) returns Data
+
+	variable tResult as Data
+	put the empty data into tResult
+
+	variable tByte as Number
+	variable tByteNum as Number
+	repeat with tByteNum from 0 up to (pCount - 1)
+		put (pVal shifted right by (tByteNum * 8) bitwise) \
+			bitwise and 255 into tByte
+
+		put the byte with code tByte after tResult
+	end repeat
+
+	return tResult
+end handler
+
+----------------------------------------------------------------
+
+private handler UnpackInt(in pData as Data, in pCount as Number) returns Number
+
+	variable tResult as Number
+	put 0 into tResult
+
+	-- Check whether this is going to end up as a negative number.  If
+	-- so, build it with bits inverted to avoid overflowing 32-bit
+	-- integer when shifting
+	variable tNegative as Boolean
+	put ((the code of byte (pCount - 1) of pData) \
+			bitwise and 128 > 0) into tNegative
+
+	variable tByte as Number
+	variable tByteNum as Number
+	repeat with tByteNum from 0 up to (pCount - 1)
+		put the code of byte (tByteNum + 1) of pData into tByte
+
+		if tNegative then
+			put (bitwise not tByte bitwise and 255) into tByte
+		end if
+
+		put tResult bitwise or \
+			(tByte shifted left by (tByteNum * 8) bitwise) into tResult
+	end repeat
+
+	if tNegative then
+		put bitwise not tResult into tResult
+	end if
+
+	return tResult
+end handler
+
+end module

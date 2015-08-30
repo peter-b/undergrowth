@@ -1,0 +1,49 @@
+module _.test._bits
+
+use _._bits
+
+-- Just test a couple of points because manually constructing byte
+-- arrays is like pulling teeth.
+
+public handler TestPackInt32()
+	variable tData as Data
+
+	put the empty data into tData
+	put the byte with code 1 after tData
+	repeat 3 times
+		put the byte with code 0 after tData
+	end repeat
+
+	test "pack +1 (32 bit)" when __U_PackInt32(1) is tData
+	test "unpack +1 (32 bit)" when __U_UnpackInt32(tData) is 1
+
+	put the empty data into tData
+	repeat 4 times
+		put the byte with code 255 after tData
+	end repeat
+
+	test "pack -1 (32 bit)" when __U_PackInt32(-1) is tData
+	test "unpack -1 (32 bit)" when __U_UnpackInt32(tData) is -1
+end handler
+
+public handler TestPackInt16()
+	variable tData as Data
+
+	put the empty data into tData
+	put the byte with code 1 after tData
+	put the byte with code 0 after tData
+
+	test "pack +1 (16 bit)" when __U_PackInt16(1) is tData
+	test "unpack +1 (16 bit)" when __U_UnpackInt16(tData) is 1
+
+	put the empty data into tData
+	repeat 2 times
+		put the byte with code 255 after tData
+	end repeat
+
+	test "pack -1 (16 bit)" when __U_PackInt16(-1) is tData
+	test "unpack -1 (16 bit)" when __U_UnpackInt16(tData) is -1
+
+end handler
+
+end module

@@ -20,6 +20,8 @@ SOURCES = \
 	callback.lcb \
 	callback.test.lcb \
 	log.lcb \
+	_bits.lcb \
+	_bits.test.lcb \
 	_util.lcb \
 	_testrunner.lcb \
 	_testlib.lcb
