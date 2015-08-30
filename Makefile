@@ -22,6 +22,8 @@ SOURCES = \
 	log.lcb \
 	_bits.lcb \
 	_bits.test.lcb \
+	_poll.lcb \
+	_poll.test.lcb \
 	_util.lcb \
 	_testrunner.lcb \
 	_testlib.lcb

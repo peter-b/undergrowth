@@ -1,0 +1,208 @@
+/*
+
+This module contains an *extremely* fragile wrapper for the poll(2)
+function. It manually constructs the `struct pollfd []` array as raw
+bytes.  For Linux, the structure is in the form:
+
+    [ fd as Int32, events as Int16, revents as Int16 ]
+
+Amusingly, there is currently literally no way to access errno, so the
+API can tell you that that poll(2) failed but not why.
+
+*/
+
+module _._poll
+
+use com.livecode.foreign
+use _.log0
+use _._bits
+use _._util
+
+----------------------------------------------------------------
+-- public handlers
+----------------------------------------------------------------
+
+public handler __U_Poll(in pPollInfo as List, in pTimeout as Number, \
+		out rPollResults as List) returns Boolean
+
+	return Poll(pPollInfo, pTimeout, rPollResults)
+end handler
+
+----------------------------------------------------------------
+-- struct pollfd management
+----------------------------------------------------------------
+
+-- Constants from <sys/poll.h> */
+
+-- These are event types that can be polled for (i.e. can be requested
+-- in the events field of struct pollfd)
+constant kPollIn  is 1 -- POLLIN (there is data to read)
+constant kPollPri is 2 -- POLLPRI (there is urgent data to read)
+constant kPollOut is 4 -- POLLOUT (writing now will not block)
+
+-- These are event types that are always implicitly polled for, even
+-- if not set in the events field.
+constant kPollErr   is 8  -- POLLERR (error condition)
+constant kPollHup   is 16 -- POLLHUP (hung up)
+constant kPollInval is 32 -- POLLNVAL (invalid polling request)
+
+-- Size of struct pollfd in bytes
+constant kPollFdSize is 8 -- bytes
+
+private handler PackPollFd(in pInfo as List) returns Data
+	variable tPollFd as Data
+	put the empty data into tPollFd
+
+	put __U_PackInt32(pInfo[1]) after tPollFd
+	put __U_PackInt16(pInfo[2]) after tPollFd
+	put __U_PackInt16(pInfo[3]) after tPollFd
+
+	return tPollFd
+end handler
+
+private handler UnpackPollFd(in pPollFd as Data) returns List
+	return [__U_UnpackInt32(byte 1 to 4 of pPollFd), \
+		__U_UnpackInt16(byte 5 to 6 of pPollFd), \
+		__U_UnpackInt16(byte 7 to 8 of pPollFd)]
+end handler
+
+private handler EncodePollEvent(in pEvents as List) returns Uint32
+	variable tFlags as UInt32
+	put 0 into tFlags
+
+	variable tEvent as String
+	variable tEventFlag as UInt32
+	repeat for each element tEvent in pEvents
+		if tEvent is "in" then
+			put kPollIn into tEventFlag
+		else if tEvent is "out" then
+			put kPollOut into tEventFlag
+		else if tEvent is "pri" then
+			put kPollPri into tEventFlag
+		else
+			throw "unknown poll event '" & tEvent & "'"
+		end  if
+
+		put tFlags bitwise or tEventFlag into tFlags
+	end repeat
+
+	return tFlags
+end handler
+
+private handler DecodePollEvent(in pFlags as UInt32) returns List
+	variable tEvents as List
+	put [] into tEvents
+
+	if pFlags bitwise and kPollIn > 0 then
+		push "in" onto tEvents
+	end if
+	if pFlags bitwise and kPollPri > 0 then
+		push "pri" onto tEvents
+	end if
+	if pFlags bitwise and kPollOut > 0 then
+		push "out" onto tEvents
+	end if
+	if pFlags bitwise and kPollErr > 0 then
+		push "err" onto tEvents
+	end if
+	if pFlags bitwise and kPollHup > 0 then
+		push "hup" onto tEvents
+	end if
+	if pFlags bitwise and kPollInval > 0 then
+		push "invalid" onto tEvents
+	end if
+
+	return tEvents
+end handler
+
+-- Convert a list of file descriptors and requested event types into a
+-- "struct pollfd[]" data block.  The list should be in the following
+-- format:
+--
+-- (( fd [event ... ] ) ... )
+--
+-- For example:
+--
+-- [[0 "in" "hup"] [1 "out"]]
+private handler PreparePollFds(in pFdInfo as List) returns Data
+	variable tPollFds as Data
+	put the empty data into tPollFds
+
+	variable tFdEntry as List
+	variable tPollFdContents as List
+	repeat for each element tFdEntry in pFdInfo
+		if the number of elements in tFdEntry is 1 then
+			put [tFdEntry[1], 0, 0] into tPollFdContents
+		else
+			put [tFdEntry[1], EncodePollEvent(element 2 to -1 of tFdEntry), 0] \
+				into tPollFdContents
+		end if
+
+		put PackPollFd(tPollFdContents) after tPollFds
+	end repeat
+
+	return tPollFds
+end handler
+
+-- Convert a pollfd data buffer into a list of file descriptor and
+-- result event types.
+private handler ParsePollFds(in pPollFds as Data) returns List
+	variable tFdInfo as List
+	put [] into tFdInfo
+
+	variable tByteOffset as Number
+	variable tFdEntry as List
+	variable tPollFdContents as List
+	repeat with tByteOffset from 1 up to \
+		(the number of bytes in pPollFds) by kPollFdSize
+
+		put UnpackPollFd(byte tByteOffset to \
+			(tByteOffset + kPollFdSize - 1) of pPollFds) into tPollFdContents
+
+		put DecodePollEvent(tPollFdContents[3]) into tFdEntry
+		push tPollFdContents[1] onto front of tFdEntry
+
+		push tFdEntry onto tFdInfo
+	end repeat
+
+	return tFdInfo
+end handler
+
+----------------------------------------------------------------
+-- Poll wrapper
+----------------------------------------------------------------
+
+private foreign handler MCDataGetBytePtr(in pData as Data) returns Pointer \
+	binds to "<builtin>"
+
+private foreign handler _poll(in pFds as Pointer, in pNFds as CUInt, \
+	in pTimeout as CInt) returns CInt binds to "poll"
+
+-- Calls poll(2), returning true if events were signalled on any of
+-- the specified file descriptors.
+handler Poll(in pPollInfo as List, in pTimeout as Number, \
+		out rPollResults as List) returns Boolean
+
+	variable tPollArray as Data
+	variable tPollArrayPtr as Pointer
+	variable tNumFds as Number
+	variable tPollStatus as Number
+
+	put the number of elements in pPollInfo into tNumFds
+	put PreparePollFds(pPollInfo) into tPollArray
+	put MCDataGetBytePtr(tPollArray) into tPollArrayPtr
+
+	put _poll(tPollArrayPtr, tNumFds, pTimeout) into tPollStatus
+
+	-- poll(2) will update the contents of tPollArray directly by
+	-- mutating its contents via tPollArrayPtr.
+
+	if tPollStatus < 0 then
+		throw "poll() failed"
+	else
+		put ParsePollFds(tPollArray) into rPollResults
+		return tPollStatus > 0
+	end if
+end handler
+
+end module

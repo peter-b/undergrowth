@@ -1,0 +1,35 @@
+module _.test._poll
+
+use _._poll
+
+-- Test that polling no file descriptors works
+public handler TestPollNone()
+	variable tPoll as List
+	variable tPollStatus as Boolean
+	put __U_Poll([], 0, tPoll) into tPollStatus
+
+	test "no fds -> no fd results" when tPoll is empty
+	test "no fds -> no fds ready" when not tPollStatus
+end handler
+
+-- Test that polling for writability works
+public handler TestPollWrite()
+	variable tPollRequest as List
+	variable tPollResults as List
+	variable tPollStatus as Boolean
+
+	-- Hopefully stdout should always be writable.
+	put [[1/*stdout*/, "out"]] into tPollRequest
+	put __U_Poll(tPollRequest, 0, tPollResults) into tPollStatus
+	test "stdout is writable" when tPollResults is [[1, "out"]]
+	test "stdout is ready" when tPollStatus
+
+	-- Hopefully stdin is never writeable!
+	put [[0/*stdin*/, "in"]] into tPollRequest
+	put __U_Poll(tPollRequest, 0, tPollResults) into tPollStatus
+	test "stdin isn't writeable" when tPollResults is [[0]]
+	test "stdin isn't ready" when not tPollStatus
+
+end handler
+
+end module
