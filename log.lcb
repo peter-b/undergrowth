@@ -30,34 +30,21 @@ end handler
 -- PRIVATE
 --==============================================================
 
-----------------------------------------------------------------
--- Constants
-----------------------------------------------------------------
+-- Main entry point for logging
+private handler Log(in pMessage as String, in pLevel as Number) returns nothing
+	variable tLines as List
+	put MessageLines(pMessage) into tLines
 
--- UNIX syslog(3) priority levels
-constant kLogError   is 3
-constant kLogWarning is 4
-constant kLogInfo    is 6
-constant kLogDebug   is 7
-
--- ANSI colour escape codes
-constant kColorError   is "\u{1B}[1;31m" -- bold red
-constant kColorWarning is "\u{1B}[33m" -- yellow
-constant kColorInfo    is "\u{1B}[0m"  -- reset
-constant kColorDebug   is "\u{1B}[36m" -- cyan
-constant kColorReset   is "\u{1B}[0m"  -- reset
-
-----------------------------------------------------------------
--- Handlers
-----------------------------------------------------------------
-
-private foreign handler _isatty(in pFd as CInt) returns CInt \
-	binds to "isatty"
-
--- Checks whether file descriptor 2 -- usually stderr -- is a TTY.
-private handler StderrIsTty() returns Boolean
-	return _isatty(2) > 0
+	if the operating system is in ["linux","mac"] and StderrIsTty() then
+		LogColour(tLines, pLevel)
+	else
+		LogDefault(tLines, pLevel)
+	end if
 end handler
+
+----------------------------------------------------------------
+-- Utility functions
+----------------------------------------------------------------
 
 private handler MessageLines(in pMessage as String) returns List
 	-- Split the message by the newline character
@@ -78,20 +65,23 @@ private handler MessageLines(in pMessage as String) returns List
 	return tLines
 end handler
 
--- Print each log message line with a prefix such as <4>, where the
--- number corresponds to the syslog level.  It's interpreted by
--- systemd-journald in order to properly categorise log messages.
-private handler LogDefault(in pLines as List, in pLevel as Number) \
-		returns nothing
+----------------------------------------------------------------
+-- Colour logging
+----------------------------------------------------------------
 
-	-- Prefix each line with a priority tag
-	variable tTag as String
-	put "<" & __U_FormatInt(pLevel) &  ">" into tTag
+-- ANSI colour escape codes
+constant kColorError   is "\u{1B}[1;31m" -- bold red
+constant kColorWarning is "\u{1B}[33m" -- yellow
+constant kColorInfo    is "\u{1B}[0m"  -- reset
+constant kColorDebug   is "\u{1B}[36m" -- cyan
+constant kColorReset   is "\u{1B}[0m"  -- reset
 
-	variable tLine as String
-	repeat for each element tLine in pLines
-		write __U_EncodeUTF8(tTag & tLine & "\n") to the error stream
-	end repeat
+private foreign handler _isatty(in pFd as CInt) returns CInt \
+	binds to "isatty"
+
+-- Checks whether file descriptor 2 -- usually stderr -- is a TTY.
+private handler StderrIsTty() returns Boolean
+	return _isatty(2) > 0
 end handler
 
 -- Print each log line in colour corresponding to the severity level,
@@ -117,16 +107,30 @@ private handler LogColour(in pLines as List, in pLevel as Number) \
 	end repeat
 end handler
 
--- Main entry point for logging
-private handler Log(in pMessage as String, in pLevel as Number) returns nothing
-	variable tLines as List
-	put MessageLines(pMessage) into tLines
+----------------------------------------------------------------
+-- Text only logging (for journal)
+----------------------------------------------------------------
 
-	if the operating system is in ["linux","mac"] and StderrIsTty() then
-		LogColour(tLines, pLevel)
-	else
-		LogDefault(tLines, pLevel)
-	end if
+-- UNIX syslog(3) priority levels
+constant kLogError   is 3
+constant kLogWarning is 4
+constant kLogInfo    is 6
+constant kLogDebug   is 7
+
+-- Print each log message line with a prefix such as <4>, where the
+-- number corresponds to the syslog level.  It's interpreted by
+-- systemd-journald in order to properly categorise log messages.
+private handler LogDefault(in pLines as List, in pLevel as Number) \
+		returns nothing
+
+	-- Prefix each line with a priority tag
+	variable tTag as String
+	put "<" & __U_FormatInt(pLevel) &  ">" into tTag
+
+	variable tLine as String
+	repeat for each element tLine in pLines
+		write __U_EncodeUTF8(tTag & tLine & "\n") to the error stream
+	end repeat
 end handler
 
 end module
