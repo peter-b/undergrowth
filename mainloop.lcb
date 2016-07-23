@@ -182,7 +182,7 @@ private handler IterationPrepare() returns Boolean
 		put 0 into sTimeout
 	end if
 
-	return tIsSourceReady
+	return tAnyReady
 end handler
 
 private handler IterationPoll() returns Boolean
