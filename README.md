@@ -7,6 +7,7 @@ pure [LiveCode Builder](https://github.com/runrev/livecode).  It
 provides:
 
 * Logging
+* String formatting
 * Callback dispatch
 * A simple main loop implementation
 
@@ -62,4 +63,4 @@ version 3.0 or (at your option) any later version.  See the
 
 The library and associated files are:
 
-  Copyright (C) 2015 Peter TB Brett
+  Copyright (C) 2015-2016 Peter TB Brett

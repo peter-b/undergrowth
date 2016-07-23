@@ -1,0 +1,178 @@
+module _.format0
+
+use _.log0
+use _._util
+
+use com.livecode.foreign
+
+--==============================================================
+-- PUBLIC
+--==============================================================
+
+----------------------------------------------------------------
+-- Handlers
+----------------------------------------------------------------
+
+-- This takes a template string and a list of substitution values.
+-- The template can contain the follow special sequences:
+--
+-- '{{'             -> literal '{' character
+-- '}}'             -> literal '}' character
+-- '{' <number> '}' -> substitute pParams[<number>]
+--
+-- Example:
+--     U_Format("There are {1} lights", [5]) -> "There are 5 lights"
+--
+public handler U_Format(in pTemplate as String, \
+		in pParams as List) returns String
+	return Format(pTemplate, pParams)
+end handler
+
+--==============================================================
+-- PRIVATE
+--==============================================================
+
+foreign handler MCValueCopyDescription(in Value as any, \
+		out Description as String) returns CBool binds to "<builtin>"
+
+----------------------------------------------------------------
+-- Format string parser
+----------------------------------------------------------------
+
+-- Parser states
+constant kParseTop is 0
+constant kParseOpen is 1
+constant kParseClose is 2
+constant kParseSub is 10
+
+-- Parse a format string into formatting information
+handler ParseTemplate(in pTemplate as String) returns List
+	-- Result
+	variable tResult as List
+
+	-- Parser state
+	variable tParseState as Number
+	put kParseTop into tParseState
+
+	variable tValue as String
+
+	-- Loop over all chars in the template in a single pass
+	variable tChar as String
+	repeat for each char tChar in pTemplate
+
+		if tParseState is kParseTop then
+			if tChar is "{" then
+				put kParseOpen into tParseState
+			else if tChar is "}" then
+				put kParseClose into tParseState
+			else
+				put tChar after tValue
+			end if
+
+		else if tParseState is kParseOpen then
+			if tChar is "{" then
+				put "{" after tValue
+				put kParseTop into tParseState
+			else
+				-- End of a literal; push it onto the templates
+				-- list if it's non-empty
+				if tValue is not empty then
+					push {"literal": true, "value": tValue} \
+							onto tResult
+					put tChar into tValue
+				end if
+				put kParseSub into tParseState
+			end if
+
+		else if tParseState is kParseClose then
+			if tChar is "}" then
+				put "}" after tValue
+				put kParseTop into tParseState
+			else
+				throw "Found unmatched '}'"
+			end if
+
+		else if tParseState is kParseSub then
+			if tChar is "{" then
+				throw "Found '{' inside substitution"
+			else if tChar is "}" then
+				push {"literal": false, "value": tValue} \
+						onto tResult
+				put "" into tValue
+				put kParseTop into tParseState
+			else
+				put tChar after tValue
+			end if
+
+		else
+			throw "Invalid format string scanner state"
+
+		end if
+	end repeat
+
+	-- Check that all substitutions are closed
+	if tParseState is kParseTop then
+		if tValue is not empty then
+			push {"literal": true, "value": tValue} \
+				onto tResult
+		end if
+	else if tParseState is kParseOpen or \
+			tParseState is kParseSub then
+		throw "Found unmatched '{'"
+	else if tParseState is kParseClose then
+		throw "Found unmatched '}'"
+	end if
+
+	return tResult
+end handler
+
+----------------------------------------------------------------
+-- Formatting implementation
+----------------------------------------------------------------
+
+-- Try and turn a value into a string.  It's a bit of a hack
+-- at the moment and could really benefit from traits...
+handler FormatValue(in pValue as optional any) returns String
+	if pValue is nothing then
+		return "nothing"
+
+	else if pValue is a string then
+		return pValue
+
+	else if pValue is a number then
+		if the trunc of pValue is pValue then
+			return __U_FormatInt(pValue)
+		else
+			return pValue formatted as string
+		end if
+
+	else
+		variable tResult as String
+		unsafe
+			MCValueCopyDescription(pValue, tResult)
+		end unsafe
+		return tResult
+	end if
+end handler
+
+handler Format(in pTemplate as String, in pParams as List)
+	variable tSections as List
+	put ParseTemplate(pTemplate) into tSections
+
+	variable tResult as String
+
+	variable tSection as Array
+	repeat for each element tSection in tSections
+		if tSection["literal"] then
+			put tSection["value"] after tResult
+		else
+			variable tFieldNumber as Number
+			put tSection["value"] parsed as number into tFieldNumber
+			put FormatValue(pParams[tFieldNumber]) after tResult
+		end if
+	end repeat
+
+	return tResult
+end handler
+
+end module

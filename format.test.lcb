@@ -1,0 +1,29 @@
+module _.tests.format
+
+use _.format0
+
+public handler TestTrivial()
+	test "format empty" when U_Format("", []) is ""
+	test "format empty extra" when U_Format("", [1]) is ""
+
+	test "format trivial" when U_Format("stuff", []) is "stuff"
+	test "format trivial extra" when U_Format("stuff", [1]) is "stuff"
+end handler
+
+public handler TestEscape()
+	test "format escape '{{'" when U_Format("{{", []) is "{"
+	test "format escape '}}'" when U_Format("}}", []) is "}"
+	test "format escape '{{}}'" when U_Format("{{1}}", []) is "{1}"
+end handler
+
+public handler TestStringFormat()
+	test "format string" when U_Format("a{1}c", ["b"]) is "abc"
+end handler
+
+public handler TestNumberFormat()
+	test "format number (int)" when U_Format("a{1}c", [2]) is "a2c"
+	test "format number (int-ish)" when U_Format("a{1}c", [2.0]) is "a2c"
+	test "format number (real)" when U_Format("a{1}c", [0.5]) is "a0.5c"
+end handler
+
+end module

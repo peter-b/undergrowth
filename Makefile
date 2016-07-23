@@ -19,6 +19,8 @@ SOURCES = \
 	mainloop.test.lcb \
 	callback.lcb \
 	callback.test.lcb \
+	format.lcb \
+	format.test.lcb \
 	log.lcb \
 	_bits.lcb \
 	_bits.test.lcb \
