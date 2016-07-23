@@ -4,8 +4,8 @@ LC_BUILD_DIR ?= $(LC_SRC_DIR)/build-linux-x86_64/livecode/out/Debug
 LC_LCI_DIR = $(LC_BUILD_DIR)/modules/lci
 LC_COMPILE ?= $(LC_BUILD_DIR)/lc-compile
 LC_RUN ?= $(LC_BUILD_DIR)/lc-run
-LC_TESTRUNNER_SRC ?= $(LC_SRC_DIR)/tests/lcb/_testrunner.lcb
-LC_TESTLIB_SRC ?= $(LC_SRC_DIR)/tests/lcb/_testlib.lcb
+LC_TESTRUNNER_SRC ?= $(LC_SRC_DIR)/tests/_testrunner.lcb
+LC_TESTLIB_SRC ?= $(LC_SRC_DIR)/tests/_testlib.lcb
 
 BUILDDIR = _build
 TESTDIR = _test
