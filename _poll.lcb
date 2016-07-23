@@ -184,25 +184,28 @@ handler Poll(in pPollInfo as List, in pTimeout as Number, \
 		out rPollResults as List) returns Boolean
 
 	variable tPollArray as Data
-	variable tPollArrayPtr as Pointer
 	variable tNumFds as Number
 	variable tPollStatus as Number
 
 	put the number of elements in pPollInfo into tNumFds
 	put PreparePollFds(pPollInfo) into tPollArray
-	put MCDataGetBytePtr(tPollArray) into tPollArrayPtr
+	unsafe
+		variable tPollArrayPtr as Pointer
+		put MCDataGetBytePtr(tPollArray) into tPollArrayPtr
 
-	put _poll(tPollArrayPtr, tNumFds, pTimeout) into tPollStatus
+		put _poll(tPollArrayPtr, tNumFds, pTimeout) into tPollStatus
 
-	-- poll(2) will update the contents of tPollArray directly by
-	-- mutating its contents via tPollArrayPtr.
+		-- poll(2) will update the contents of tPollArray directly by
+		-- mutating its contents via tPollArrayPtr.
 
-	if tPollStatus < 0 then
-		throw "poll() failed"
-	else
-		put ParsePollFds(tPollArray) into rPollResults
-		return tPollStatus > 0
-	end if
+		if tPollStatus < 0 then
+			throw "poll() failed"
+		else
+			put ParsePollFds(tPollArray) into rPollResults
+		end if
+	end unsafe
+
+	return tPollStatus > 0
 end handler
 
 end module

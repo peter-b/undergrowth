@@ -32,13 +32,17 @@ foreign handler MCStringDecode(in Encoded as Data, in Encoding as CInt, in IsExt
 
 public handler __U_EncodeUTF8(in pString as String) returns Data
 	variable tEncoded as Data
-	MCStringEncode(pString, 4 /* UTF-8 */, false, tEncoded)
+	unsafe
+		MCStringEncode(pString, 4 /* UTF-8 */, false, tEncoded)
+	end unsafe
 	return tEncoded
 end handler
 
 public handler __U_DecodeUTF8(in pData as Data) returns String
 	variable tString as String
-	MCStringDecode(pData, 4 /* UTF-8 */, false, tString)
+	unsafe
+		MCStringDecode(pData, 4 /* UTF-8 */, false, tString)
+	end unsafe
 	return tString
 end handler
 

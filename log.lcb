@@ -81,7 +81,11 @@ private foreign handler _isatty(in pFd as CInt) returns CInt \
 
 -- Checks whether file descriptor 2 -- usually stderr -- is a TTY.
 private handler StderrIsTty() returns Boolean
-	return _isatty(2) > 0
+	variable tIsTty as Boolean
+	unsafe
+		put _isatty(2) > 0 into tIsTty
+	end unsafe
+	return tIsTty
 end handler
 
 -- Print each log line in colour corresponding to the severity level,
