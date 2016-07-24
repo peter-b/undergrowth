@@ -1,3 +1,6 @@
+-- FIXME log level constants should be available in the
+-- public API.
+
 module _.log0
 
 use com.livecode.foreign
@@ -6,6 +9,17 @@ use _._util
 --==============================================================
 -- PUBLIC
 --==============================================================
+
+----------------------------------------------------------------
+-- Types
+----------------------------------------------------------------
+
+public handler type U_LogHandlerT(in pMessage as String, \
+		in pLevel as Number) returns nothing
+
+----------------------------------------------------------------
+-- Handlers
+----------------------------------------------------------------
 
 public handler U_Debug(in pMessage as String) returns nothing
 	Log(pMessage, kLogDebug)
@@ -26,19 +40,53 @@ public handler U_Error(in pMessage as String) returns nothing
 	quit with status 42
 end handler
 
---==============================================================
--- PRIVATE
---==============================================================
-
--- Main entry point for logging
-private handler Log(in pMessage as String, in pLevel as Number) returns nothing
+-- The default handler used for outputting log messages
+public handler U_DefaultLogHandler(in pMessage as String, \
+		in pLevel as Number) returns nothing
 	variable tLines as List
-	put MessageLines(pMessage) into tLines
+	split pMessage by "\n" into tLines
 
 	if the operating system is in ["linux","mac"] and StderrIsTty() then
 		LogColour(tLines, pLevel)
 	else
 		LogDefault(tLines, pLevel)
+	end if
+end handler
+
+-- Set the default log handler, returning the previous default log
+-- handler
+public handler U_SetDefaultLogHandler(in pHandler as U_LogHandlerT) \
+		returns U_LogHandlerT
+	variable tOldHandler as optional U_LogHandlerT
+	put sDefaultHandler into tOldHandler
+	put pHandler into sDefaultHandler
+	if tOldHandler is nothing then
+		return U_DefaultLogHandler
+	else
+		return tOldHandler
+	end if
+end handler
+
+--==============================================================
+-- PRIVATE
+--==============================================================
+
+----------------------------------------------------------------
+-- Variables
+----------------------------------------------------------------
+
+variable sDefaultHandler as optional U_LogHandlerT
+
+----------------------------------------------------------------
+-- Handlers
+----------------------------------------------------------------
+
+-- Main entry point for logging
+private handler Log(in pMessage as String, in pLevel as Number) returns nothing
+	if sDefaultHandler is nothing then
+		U_DefaultLogHandler(pMessage, pLevel)
+	else
+		sDefaultHandler(pMessage, pLevel)
 	end if
 end handler
 

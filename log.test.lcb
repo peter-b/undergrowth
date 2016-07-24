@@ -1,0 +1,28 @@
+module _.tests.log
+
+use _.log0
+
+variable sCapturedLogs as List
+
+handler TestCustomHandler_Callback(in pMessage as String, \
+		in pLevel as Number) returns nothing
+	push [pLevel, pMessage] onto sCapturedLogs
+end handler
+
+public handler TestCustomHandler()
+	-- Install a custom handler
+	variable sOldHandler as U_LogHandlerT
+	put U_SetDefaultLogHandler(TestCustomHandler_Callback) \
+			into sOldHandler
+
+	-- FIXME cannot compare handlers in LCB
+	-- test "start with default handler" \
+	--		when sOldHandler is U_DefaultLogHandler
+
+	U_Warning("Blah")
+
+	test "custom log handlers work" \
+			when sCapturedLogs is [[4, "Blah"]]
+end handler
+
+end module
