@@ -3,6 +3,7 @@ module _.tests.format
 use _.format0
 
 public handler TestTrivial()
+	plan 4 tests
 	test "format empty" when U_Format("", []) is ""
 	test "format empty extra" when U_Format("", [1]) is ""
 
@@ -11,16 +12,19 @@ public handler TestTrivial()
 end handler
 
 public handler TestEscape()
+	plan 3 tests
 	test "format escape '{{'" when U_Format("{{", []) is "{"
 	test "format escape '}}'" when U_Format("}}", []) is "}"
 	test "format escape '{{}}'" when U_Format("{{1}}", []) is "{1}"
 end handler
 
 public handler TestStringFormat()
+	plan 1 tests
 	test "format string" when U_Format("a{1}c", ["b"]) is "abc"
 end handler
 
 public handler TestNumberFormat()
+	plan 3 tests
 	test "format number (int)" when U_Format("a{1}c", [2]) is "a2c"
 	test "format number (int-ish)" when U_Format("a{1}c", [2.0]) is "a2c"
 	test "format number (real)" when U_Format("a{1}c", [0.5]) is "a0.5c"
