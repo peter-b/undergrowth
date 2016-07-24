@@ -1,6 +1,5 @@
 module _.tests.callback
 
-use _.log0
 use _.callback0
 
 private handler ThunkCallback(inout xInfo)

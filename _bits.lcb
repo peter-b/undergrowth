@@ -9,7 +9,6 @@ doing this.
 module _._bits
 
 use com.livecode.foreign
-use _.log0
 use _._util
 
 public handler __U_PackInt32(in pVal as Int32) returns Data

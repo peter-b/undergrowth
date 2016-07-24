@@ -1,6 +1,5 @@
 module _.format0
 
-use _.log0
 use _._util
 
 use com.livecode.foreign

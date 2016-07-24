@@ -14,7 +14,6 @@ API can tell you that that poll(2) failed but not why.
 module _._poll
 
 use com.livecode.foreign
-use _.log0
 use _._bits
 use _._util
 
