@@ -25,4 +25,22 @@ public handler TestCustomHandler()
 			when sCapturedLogs is [[4, "Blah"]]
 end handler
 
+public handler TestFormat()
+	U_SetDefaultLogHandler(TestCustomHandler_Callback)
+
+	U_Info(["some {1}", "stuff"])
+	test "format" when sCapturedLogs is [[6, "some stuff"]]
+	put [] into sCapturedLogs
+
+	-- Check that a warning is generated when the parameter is bad
+	U_Info([])
+	test "format (no format)" when sCapturedLogs[1][1] is 4
+
+	U_Info([5])
+	test "format (no format)" when sCapturedLogs[2][1] is 4
+
+	U_Info({})
+	test "format (non-list)" when sCapturedLogs[3][1] is 4
+end handler
+
 end module

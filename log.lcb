@@ -1,9 +1,29 @@
+/**
+
+The logging library provides basic logging support.  The main entry
+point is via the top level U_Debug(), U_Info(), U_Warning() and
+U_Error() handlers.
+
+Log messages can be literal strings, or can be formatted using the
+format syntax provided by the string formatting library.
+
+For example:
+
+    -- Log a literal string
+    U_Error("Failed to open log file")
+
+    -- Log a formatted string
+    U_Error(["Failed to open log file '{1}'", "connections.log"])
+
+*/
 -- FIXME log level constants should be available in the
 -- public API.
 
 module _.log0
 
 use com.livecode.foreign
+
+use _.format0
 use _._util
 
 --==============================================================
@@ -21,19 +41,19 @@ public handler type U_LogHandlerT(in pMessage as String, \
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_Debug(in pMessage as String) returns nothing
+public handler U_Debug(in pMessage as any) returns nothing
 	Log(pMessage, kLogDebug)
 end handler
 
-public handler U_Info(in pMessage as String) returns nothing
+public handler U_Info(in pMessage as any) returns nothing
 	Log(pMessage, kLogInfo)
 end handler
 
-public handler U_Warning(in pMessage as String) returns nothing
+public handler U_Warning(in pMessage as any) returns nothing
 	Log(pMessage, kLogWarning)
 end handler
 
-public handler U_Error(in pMessage as String) returns nothing
+public handler U_Error(in pMessage as any) returns nothing
 	Log(pMessage, kLogError)
 
 	-- Errors are fatal
@@ -82,11 +102,36 @@ variable sDefaultHandler as optional U_LogHandlerT
 ----------------------------------------------------------------
 
 -- Main entry point for logging
-private handler Log(in pMessage as String, in pLevel as Number) returns nothing
-	if sDefaultHandler is nothing then
-		U_DefaultLogHandler(pMessage, pLevel)
+private handler Log(in pMessage as any, in pLevel as Number) returns nothing
+	variable tMessage as String
+
+	if pMessage is a string then
+		put pMessage into tMessage
+
+	else if pMessage is a list then
+		variable tFormat as String
+		variable tParams as List
+
+		if the number of elements in pMessage < 1 or \
+				not (element 1 of pMessage is a string) then
+			U_Warning(["Invalid format list passed to log: {1}", \
+					pMessage])
+			return
+		else
+			put pMessage into tParams
+			pop front of tParams into tFormat
+			put U_Format(tFormat, tParams) into tMessage
+		end if
+
 	else
-		sDefaultHandler(pMessage, pLevel)
+		U_Warning(["Invalid message passed to log: {1}", pMessage])
+		return
+	end if
+
+	if sDefaultHandler is nothing then
+		U_DefaultLogHandler(tMessage, pLevel)
+	else
+		sDefaultHandler(tMessage, pLevel)
 	end if
 end handler
 
