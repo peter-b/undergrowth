@@ -22,6 +22,8 @@ SOURCES = \
 	format.lcb \
 	format.test.lcb \
 	log.lcb \
+	result.lcb \
+	result.test.lcb \
 	_bits.lcb \
 	_bits.test.lcb \
 	_poll.lcb \
