@@ -8,13 +8,13 @@ module _.callback0
 -- Types
 ----------------------------------------------------------------
 
-public type U_Callback is any
+public type U_CallbackT is any
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_CallbackDispatch(inout xCallback as U_Callback, \
+public handler U_CallbackDispatch(inout xCallback as U_CallbackT, \
 		inout xInfo as optional any) returns optional any
 	return Dispatch(xCallback, xInfo)
 end handler
@@ -27,20 +27,21 @@ end handler
 -- Types
 ----------------------------------------------------------------
 
-private handler type Callback(inout xInfo as optional any) returns optional any
+private handler type CallbackT(inout xInfo as optional any) \
+		returns optional any
 
-private handler type ContextCallback(inout xInfo as optional any, \
+private handler type ContextCallbackT(inout xInfo as optional any, \
 	inout xContext as any) returns optional any
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-private handler Dispatch(inout xCallback as U_Callback, \
+private handler Dispatch(inout xCallback as U_CallbackT, \
 		inout xInfo as optional any) returns optional any
 
-	variable tCallback as Callback
-	variable tContextCallback as ContextCallback
+	variable tCallback as CallbackT
+	variable tContextCallback as ContextCallbackT
 
 	if xCallback is a list then
 		put xCallback[1] into tContextCallback

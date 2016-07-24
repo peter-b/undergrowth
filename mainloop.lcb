@@ -11,7 +11,7 @@ use _.callback0
 -- Types
 ----------------------------------------------------------------
 
-public type U_MainLoopSourceId is Number
+public type U_MainLoopSourceIdT is Number
 
 ----------------------------------------------------------------
 -- Handlers
@@ -25,7 +25,7 @@ public handler U_MainLoopQuit() returns nothing
 	Quit()
 end handler
 
-public handler U_MainLoopAddIdle(in pCallback as U_Callback) returns nothing
+public handler U_MainLoopAddIdle(in pCallback as U_CallbackT) returns nothing
 	AddIdle(pCallback)
 end handler
 
@@ -81,14 +81,14 @@ end handler
 ----------------------------------------------------------------
 
 -- Idle sources are always ready to dispatch
-private handler __IdlePrepare(inout xSource as SourceInfo, \
+private handler __IdlePrepare(inout xSource as SourceInfoT, \
 		out rTimeout as Number) returns Boolean
 	put 0 into rTimeout
 	return true
 end handler
 
-private handler AddIdle(in pCallback as U_Callback) returns nothing
-	variable tSourceInfo as SourceInfo
+private handler AddIdle(in pCallback as U_CallbackT) returns nothing
+	variable tSourceInfo as SourceInfoT
 	put the empty array into tSourceInfo
 	
 	put pCallback into tSourceInfo["Callback"]
@@ -102,9 +102,9 @@ end handler
 -- Event sources
 ----------------------------------------------------------------
 
-private type SourceInfo is Array
+private type SourceInfoT is Array
 
-private handler type SourcePrepareFunc(inout xSource as SourceInfo, \
+private handler type SourcePrepareFuncT(inout xSource as SourceInfoT, \
 	out rTimeout as Number) returns Boolean
 
 -- Add a source to the list of event sources
@@ -124,10 +124,10 @@ end handler
 -- Prepare a source for dispatch.  If the source doesn't specify a
 -- prepare function, assume that it's not ready to dispatch and is
 -- happy to block forever.
-private handler SourcePrepare(inout xSource as SourceInfo, \
+private handler SourcePrepare(inout xSource as SourceInfoT, \
 		out rTimeout as Number) returns Boolean
 
-	variable tPrepareFunc as SourcePrepareFunc
+	variable tPrepareFunc as SourcePrepareFuncT
 	variable tReady as Boolean
 
 	if "Prepare" is among the keys of xSource then
@@ -142,7 +142,7 @@ private handler SourcePrepare(inout xSource as SourceInfo, \
 	return tReady
 end handler
 
-private handler SourceDispatch(inout xSource as SourceInfo) returns Boolean
+private handler SourceDispatch(inout xSource as SourceInfoT) returns Boolean
 	return U_CallbackDispatch(xSource["Callback"], xSource)
 end handler
 
