@@ -1,6 +1,6 @@
 # Undergrowth Utility Library
 
-Copyright (C) 2015 Peter Brett
+Copyright (C) 2015-2016 Peter Brett
 
 "undergrowth" is a utility library for programs that are written in
 pure [LiveCode Builder](https://github.com/runrev/livecode).  It
