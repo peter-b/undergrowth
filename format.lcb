@@ -22,6 +22,14 @@ use com.livecode.foreign
 -- Example:
 --     U_Format("There are {1} lights", [5]) -> "There are 5 lights"
 --
+-- It is permitted to leave out the parameter number, in which
+-- case the parameters are consumed in order.  For example:
+--
+--     U_Format("The {} sat on the {}.", ["elephant", "house"])
+--             -> "The elephant sat on the house."
+--
+-- Unnumbered parameters may not occur after numbered parameters.
+--
 public handler U_Format(in pTemplate as String, \
 		in pParams as List) returns String
 	return Format(pTemplate, pParams)
@@ -78,9 +86,18 @@ handler ParseTemplate(in pTemplate as String) returns List
 				if tValue is not empty then
 					push {"literal": true, "value": tValue} \
 							onto tResult
-					put tChar into tValue
 				end if
-				put kParseSub into tParseState
+
+				if tChar is "}" then
+					-- Empty substitution
+					push {"literal": false, "value": ""} \
+							onto tResult
+					put "" into tValue
+					put kParseTop into tParseState
+				else
+					put tChar into tValue
+					put kParseSub into tParseState
+				end if
 			end if
 
 		else if tParseState is kParseClose then
@@ -131,6 +148,8 @@ end handler
 
 -- Try and turn a value into a string.  It's a bit of a hack
 -- at the moment and could really benefit from traits...
+--
+-- FIXME number formatting works really badly with big integers
 handler FormatValue(in pValue as optional any) returns String
 	if pValue is nothing then
 		return "nothing"
@@ -160,14 +179,31 @@ handler Format(in pTemplate as String, in pParams as List)
 
 	variable tResult as String
 
+	variable tIsAutonum as Boolean
+	variable tAutoNum as Number
+	put true into tIsAutonum
+	put 1 into tAutoNum
+
 	variable tSection as Array
 	repeat for each element tSection in tSections
 		if tSection["literal"] then
 			put tSection["value"] after tResult
+
+		else if tSection["value"] is empty then
+			if tIsAutonum then
+				put FormatValue(pParams[tAutoNum]) after tResult
+				add 1 to tAutoNum
+			else
+				throw "Can't format autonumbered params after numbered params"
+			end if
+
 		else
 			variable tFieldNumber as Number
 			put tSection["value"] parsed as number into tFieldNumber
 			put FormatValue(pParams[tFieldNumber]) after tResult
+
+			-- Disable autonumbering from first numbered param
+			put false into tIsAutonum
 		end if
 	end repeat
 

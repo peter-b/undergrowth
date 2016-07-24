@@ -1,6 +1,7 @@
 module _.tests.format
 
 use _.format0
+use com.livecode.__INTERNAL._testlib
 
 public handler TestTrivial()
 	plan 4 tests
@@ -28,6 +29,18 @@ public handler TestNumberFormat()
 	test "format number (int)" when U_Format("a{1}c", [2]) is "a2c"
 	test "format number (int-ish)" when U_Format("a{1}c", [2.0]) is "a2c"
 	test "format number (real)" when U_Format("a{1}c", [0.5]) is "a0.5c"
+end handler
+
+handler TestAutomaticNumbering_Restart()
+	return U_Format("a{1}{}d", ["b", "c"])
+end handler
+
+public handler TestAutomaticNumbering()
+	plan 1 tests
+	test "format autonumber" when U_Format("a{}{}d", ["b", "c"]) is "abcd"
+
+	MCUnitTestHandlerThrows(TestAutomaticNumbering_Restart, \
+			"format autonumber not allowed after explicit number")
 end handler
 
 end module
