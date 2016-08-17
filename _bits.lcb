@@ -11,28 +11,28 @@ module _._bits
 use com.livecode.foreign
 use _._util
 
-public handler __U_PackBytes(in pVal as List/*<Number>*/) returns Data
-	return PackBytes(pVal)
+public handler __u_pack_bytes(in pVal as List/*<Number>*/) returns Data
+	return pack_bytes(pVal)
 end handler
 
-public handler __U_PackInt32(in pVal as Int32) returns Data
-	return PackInt(pVal, 4)
+public handler __u_pack_int32(in pVal as Int32) returns Data
+	return pack_int(pVal, 4)
 end handler
-public handler __U_UnpackInt32(in pData as Data) returns Int32
-	return UnpackInt(pData, 4)
+public handler __u_unpack_int32(in pData as Data) returns Int32
+	return unpack_int(pData, 4)
 end handler
 
 -- FIXME LCB doesn't have an Int16 type yet.
-public handler __U_PackInt16(in pVal as Int32) returns Data
-	return PackInt(pVal, 2)
+public handler __u_pack_int16(in pVal as Int32) returns Data
+	return pack_int(pVal, 2)
 end handler
-public handler __U_UnpackInt16(in pData as Data) returns Int32
-	return UnpackInt(pData, 2)
+public handler __u_unpack_int16(in pData as Data) returns Int32
+	return unpack_int(pData, 2)
 end handler
 
 ----------------------------------------------------------------
 
-private handler PackBytes(in pVal as List) returns Data
+private handler pack_bytes(in pVal as List) returns Data
 	variable tResult as Data
 	variable tByteNum as Number
 	repeat for each element tByteNum in pVal
@@ -41,7 +41,7 @@ private handler PackBytes(in pVal as List) returns Data
 	return tResult
 end handler
 
-private handler PackInt(in pVal as Number, in pCount as Number) returns Data
+private handler pack_int(in pVal as Number, in pCount as Number) returns Data
 
 	variable tResult as Data
 	put the empty data into tResult
@@ -60,7 +60,8 @@ end handler
 
 ----------------------------------------------------------------
 
-private handler UnpackInt(in pData as Data, in pCount as Number) returns Number
+private handler unpack_int(in pData as Data, in pCount as Number) \
+		returns Number
 
 	variable tResult as Number
 	put 0 into tResult

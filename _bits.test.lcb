@@ -3,54 +3,54 @@ module _.test._bits
 use _._bits
 use com.livecode.__INTERNAL._testlib
 
-handler TestPackBytes_Negative()
-	return __U_PackBytes([-1])
+handler test_pack_bytes__negative()
+	return __u_pack_bytes([-1])
 end handler
-handler TestPackBytes_Overflow()
-	return __U_PackBytes([256])
+handler test_pack_bytes__overflow()
+	return __u_pack_bytes([256])
 end handler
 
-public handler TestPackBytes()
+public handler test_pack_bytes()
 	variable tData as Data
 
-	put __U_PackBytes([0,255]) into tData
+	put __u_pack_bytes([0,255]) into tData
 	test "pack byte values from list" when \
 			the code of byte 1 of tData is 0 and \
 			the code of byte 2 of tData is 255 and \
 			the number of bytes in tData is 2
 
-	MCUnitTestHandlerThrows(TestPackBytes_Negative, \
+	MCUnitTestHandlerThrows(test_pack_bytes__negative, \
 			"pack negative byte value")
-	MCUnitTestHandlerThrows(TestPackBytes_Overflow, \
+	MCUnitTestHandlerThrows(test_pack_bytes__overflow, \
 			"pack overflowing byte value")
 end handler
 
-public handler TestPackInt32()
+public handler test_pack_int32()
 	variable tData as Data
 
-	put __U_PackBytes([1,0,0,0]) into tData
+	put __u_pack_bytes([1,0,0,0]) into tData
 
-	test "pack +1 (32 bit)" when __U_PackInt32(1) is tData
-	test "unpack +1 (32 bit)" when __U_UnpackInt32(tData) is 1
+	test "pack +1 (32 bit)" when __u_pack_int32(1) is tData
+	test "unpack +1 (32 bit)" when __u_unpack_int32(tData) is 1
 
-	put __U_PackBytes([255,255,255,255]) into tData
+	put __u_pack_bytes([255,255,255,255]) into tData
 
-	test "pack -1 (32 bit)" when __U_PackInt32(-1) is tData
-	test "unpack -1 (32 bit)" when __U_UnpackInt32(tData) is -1
+	test "pack -1 (32 bit)" when __u_pack_int32(-1) is tData
+	test "unpack -1 (32 bit)" when __u_unpack_int32(tData) is -1
 end handler
 
-public handler TestPackInt16()
+public handler test_pack_int16()
 	variable tData as Data
 
-	put __U_PackBytes([1,0]) into tData
+	put __u_pack_bytes([1,0]) into tData
 
-	test "pack +1 (16 bit)" when __U_PackInt16(1) is tData
-	test "unpack +1 (16 bit)" when __U_UnpackInt16(tData) is 1
+	test "pack +1 (16 bit)" when __u_pack_int16(1) is tData
+	test "unpack +1 (16 bit)" when __u_unpack_int16(tData) is 1
 
-	put __U_PackBytes([255,255]) into tData
+	put __u_pack_bytes([255,255]) into tData
 
-	test "pack -1 (16 bit)" when __U_PackInt16(-1) is tData
-	test "unpack -1 (16 bit)" when __U_UnpackInt16(tData) is -1
+	test "pack -1 (16 bit)" when __u_pack_int16(-1) is tData
+	test "unpack -1 (16 bit)" when __u_unpack_int16(tData) is -1
 end handler
 
 end module

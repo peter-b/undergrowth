@@ -52,17 +52,17 @@ private handler PackPollFd(in pInfo as List) returns Data
 	variable tPollFd as Data
 	put the empty data into tPollFd
 
-	put __U_PackInt32(pInfo[1]) after tPollFd
-	put __U_PackInt16(pInfo[2]) after tPollFd
-	put __U_PackInt16(pInfo[3]) after tPollFd
+	put __u_pack_int32(pInfo[1]) after tPollFd
+	put __u_pack_int16(pInfo[2]) after tPollFd
+	put __u_pack_int16(pInfo[3]) after tPollFd
 
 	return tPollFd
 end handler
 
 private handler UnpackPollFd(in pPollFd as Data) returns List
-	return [__U_UnpackInt32(byte 1 to 4 of pPollFd), \
-		__U_UnpackInt16(byte 5 to 6 of pPollFd), \
-		__U_UnpackInt16(byte 7 to 8 of pPollFd)]
+	return [__u_unpack_int32(byte 1 to 4 of pPollFd), \
+		__u_unpack_int16(byte 5 to 6 of pPollFd), \
+		__u_unpack_int16(byte 7 to 8 of pPollFd)]
 end handler
 
 private handler EncodePollEvent(in pEvents as List) returns Uint32
