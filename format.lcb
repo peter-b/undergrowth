@@ -20,17 +20,17 @@ use com.livecode.foreign
 -- '{' <number> '}' -> substitute pParams[<number>]
 --
 -- Example:
---     U_Format("There are {1} lights", [5]) -> "There are 5 lights"
+--     u_format("There are {1} lights", [5]) -> "There are 5 lights"
 --
 -- It is permitted to leave out the parameter number, in which
 -- case the parameters are consumed in order.  For example:
 --
---     U_Format("The {} sat on the {}.", ["elephant", "house"])
+--     u_format("The {} sat on the {}.", ["elephant", "house"])
 --             -> "The elephant sat on the house."
 --
 -- Unnumbered parameters may not occur after numbered parameters.
 --
-public handler U_Format(in pTemplate as String, \
+public handler u_format(in pTemplate as String, \
 		in pParams as List) returns String
 	return Format(pTemplate, pParams)
 end handler
