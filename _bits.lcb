@@ -11,6 +11,10 @@ module _._bits
 use com.livecode.foreign
 use _._util
 
+public handler __U_PackBytes(in pVal as List/*<Number>*/) returns Data
+	return PackBytes(pVal)
+end handler
+
 public handler __U_PackInt32(in pVal as Int32) returns Data
 	return PackInt(pVal, 4)
 end handler
@@ -27,6 +31,15 @@ public handler __U_UnpackInt16(in pData as Data) returns Int32
 end handler
 
 ----------------------------------------------------------------
+
+private handler PackBytes(in pVal as List) returns Data
+	variable tResult as Data
+	variable tByteNum as Number
+	repeat for each element tByteNum in pVal
+		put the byte with code tByteNum after tResult
+	end repeat
+	return tResult
+end handler
 
 private handler PackInt(in pVal as Number, in pCount as Number) returns Data
 

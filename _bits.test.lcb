@@ -1,6 +1,29 @@
 module _.test._bits
 
 use _._bits
+use com.livecode.__INTERNAL._testlib
+
+handler TestPackBytes_Negative()
+	return __U_PackBytes([-1])
+end handler
+handler TestPackBytes_Overflow()
+	return __U_PackBytes([256])
+end handler
+
+public handler TestPackBytes()
+	variable tData as Data
+
+	put __U_PackBytes([0,255]) into tData
+	test "pack byte values from list" when \
+			the code of byte 1 of tData is 0 and \
+			the code of byte 2 of tData is 255 and \
+			the number of bytes in tData is 2
+
+	MCUnitTestHandlerThrows(TestPackBytes_Negative, \
+			"pack negative byte value")
+	MCUnitTestHandlerThrows(TestPackBytes_Overflow, \
+			"pack overflowing byte value")
+end handler
 
 -- Just test a couple of points because manually constructing byte
 -- arrays is like pulling teeth.
