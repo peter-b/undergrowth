@@ -6,12 +6,12 @@ programming error.  For example, when fetching the contents of a file,
 reading may fail for any number of reasons, such as if the file does
 not exist or you do not have permission to read it.
 
-A U_ResultT is an opaque type with two states: "ok", in which case it
-contains a value that can be obtained with U_Unwrap(), or "error", in
+A UResult is an opaque type with two states: "ok", in which case it
+contains a value that can be obtained with u_unwrap(), or "error", in
 which case it contains error information that can be obtained with
-U_GetError().
+u_get_error().
 
-You can chain result-based operations together with U_ResultMap().
+You can chain result-based operations together with u_result_map().
 */
 module _.result0
 
@@ -25,68 +25,62 @@ use _.format0
 -- Types
 ----------------------------------------------------------------
 
-public type U_ResultT is Array
+public type UResult is Array
 
-public handler type U_ResultMapFuncT(in pResult as U_ResultT, \
-		inout xContext as optional any) returns U_ResultT
+public handler type UResultMapFunc(in pResult as UResult, \
+		inout xContext as optional any) returns UResult
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_MakeResult(in pValue as optional any)
+public handler u_make_result(in pValue as optional any)
 	return { "__OK": pValue }
 end handler
 
-public handler U_MakeError(in pErrorInfo as any)
+public handler u_make_error(in pErrorInfo as any)
 	return { "__ERROR": pErrorInfo }
 end handler
 
-public handler U_IsOk(in pResult as U_ResultT) returns Boolean
-	if "__OK" is among the keys of pResult then
-		return true
-	else if "__ERROR" is among the keys of pResult then
-		return false
+public handler u_is_ok(in pResult as UResult) returns Boolean
+	if u_is_result(pResult) then
+		return "__OK" is among the keys of pResult
 	else
-		throw "Parameter is not a U_ResultT"
+		throw "Parameter is not a UResult"
 	end if
 end handler
 
-public handler U_IsError(in pResult as U_ResultT) returns Boolean
-	return not U_IsOk(pResult)
+public handler u_is_error(in pResult as UResult) returns Boolean
+	return not u_is_ok(pResult)
 end handler
 
-public handler U_Unwrap(in pResult as U_ResultT) returns optional any
-	if "__OK" is among the keys of pResult then
+public handler u_unwrap(in pResult as UResult) returns optional any
+	if u_is_ok(pResult) then
 		return pResult["__OK"]
-	else if "__ERROR" is among the keys of pResult then
-		throw U_Format("Unhandled error info: {}", \
-				[pResult["__ERROR"]])
 	else
-		throw "Parameter is not a U_Result"
+		throw u_format("Unhandled error info: {}", \
+				[pResult["__ERROR"]])
 	end if
 end handler
 
-public handler U_Expect(in pResult as U_ResultT, in pMessage as String) \
+public handler u_expect(in pResult as UResult, in pMessage as String) \
 		returns optional any
-	if U_IsError(pResult) then
+	if u_is_error(pResult) then
 		throw pMessage
 	else
-		return U_Unwrap(pResult)
+		return u_unwrap(pResult)
 	end if
 end handler
 
-public handler U_GetError(in pResult as U_ResultT) returns any
-	if "__ERROR" is among the keys of pResult then
+public handler u_get_error(in pResult as UResult) returns any
+	if u_is_error(pResult) then
 		return pResult["__ERROR"]
-	else if "__OK" is among the keys of pResult then
-		throw "Successful result has no error info"
 	else
-		throw "Parameter is not a U_ResultT"
+		throw "Successful result has no error info"
 	end if
 end handler
 
-public handler U_IsResult(in pValue) returns Boolean
+public handler u_is_result(in pValue) returns Boolean
 	if not (pValue is an array) then
 		return false
 	else if "__OK" is among the keys of pValue or \
@@ -97,19 +91,19 @@ public handler U_IsResult(in pValue) returns Boolean
 	end if
 end handler
 
-public handler U_ResultMap(in pResult as U_ResultT, \
-		in pMapFunc as U_ResultMapFuncT, \
-		inout xContext as optional any) returns U_ResultT
+public handler u_result_map(in pResult as UResult, \
+		in pMapFunc as UResultMapFunc, \
+		inout xContext as optional any) returns UResult
 
-	if not U_IsOk(pResult) then
+	if u_is_error(pResult) then
 		return pResult
 	end if
 
-	variable tResult as U_ResultT
+	variable tResult as UResult
 	put pMapFunc(pResult, xContext) into tResult
 
-	if not U_IsResult(tResult) then
-		throw "Map function did not return a U_ResultT"
+	if not u_is_result(tResult) then
+		throw "Map function did not return a UResult"
 	end if
 
 	return tResult

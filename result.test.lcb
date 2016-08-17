@@ -4,63 +4,63 @@ use _.result0
 use com.livecode.__INTERNAL._testlib
 
 handler TestOk_GetError()
-	return U_GetError(U_MakeResult(true))
+	return u_get_error(u_make_result(true))
 end handler
 
 public handler TestOk()
 	variable tValue as List
 	put ["a", "b"] into tValue
 
-	variable tResult as U_ResultT
-	put U_MakeResult(tValue) into tResult
+	variable tResult as UResult
+	put u_make_result(tValue) into tResult
 
-	test "result ok (ok)" when U_IsOk(tResult)
-	test "result not error (ok)" when not U_IsError(tResult)
+	test "result ok (ok)" when u_is_ok(tResult)
+	test "result not error (ok)" when not u_is_error(tResult)
 
-	test "result unwrap (ok)" when U_Unwrap(tResult) is tValue
-	test "result expect (ok)" when U_Expect(tResult, "whoops") is tValue
+	test "result unwrap (ok)" when u_unwrap(tResult) is tValue
+	test "result expect (ok)" when u_expect(tResult, "whoops") is tValue
 
 	MCUnitTestHandlerThrows(TestOk_GetError, "result get error (ok)")
 end handler
 
 handler TestError_Unwrap()
-	return U_Unwrap(U_MakeError("stuff"))
+	return u_unwrap(u_make_error("stuff"))
 end handler
 
 handler TestError_Expect()
-	return U_Expect(U_MakeError("stuff"), "whoops")
+	return u_expect(u_make_error("stuff"), "whoops")
 end handler
 
 public handler TestError()
-	variable tResult as U_ResultT
-	put U_MakeError("stuff") into tResult
+	variable tResult as UResult
+	put u_make_error("stuff") into tResult
 
-	test "result ok (err)" when not U_IsOk(tResult)
-	test "result not error (err)" when U_IsError(tResult)
+	test "result ok (err)" when not u_is_ok(tResult)
+	test "result not error (err)" when u_is_error(tResult)
 
 	MCUnitTestHandlerThrows(TestError_Unwrap, "result unwrap (err)")
 	MCUnitTestHandlerThrows(TestError_Expect, "result expect (err)")
 
-	test "result get error (err)" when U_GetError(tResult) is "stuff"
+	test "result get error (err)" when u_get_error(tResult) is "stuff"
 end handler
 
-handler TestMap_Add(in pResult as U_ResultT, \
-		inout pAddition as optional any) returns U_ResultT
-	return U_MakeResult(pAddition + U_Unwrap(pResult))
+handler TestMap_Add(in pResult as UResult, \
+		inout pAddition as optional any) returns UResult
+	return u_make_result(pAddition + u_unwrap(pResult))
 end handler
 
 public handler TestMap()
-	variable tResult as U_ResultT
+	variable tResult as UResult
 	variable tContext as Number
 	put 5 into tContext
 
-	put U_MakeResult(3) into tResult
-	put U_ResultMap(tResult, TestMap_Add, tContext) into tResult
-	test "map unwrap (ok)" when U_Unwrap(tResult) is 8
+	put u_make_result(3) into tResult
+	put u_result_map(tResult, TestMap_Add, tContext) into tResult
+	test "map unwrap (ok)" when u_unwrap(tResult) is 8
 
-	put U_MakeError("whoops") into tResult
-	put U_ResultMap(tResult, TestMap_Add, tContext) into tResult
-	test "map get error (err)" when U_GetError(tResult) is "whoops"
+	put u_make_error("whoops") into tResult
+	put u_result_map(tResult, TestMap_Add, tContext) into tResult
+	test "map get error (err)" when u_get_error(tResult) is "whoops"
 end handler
 
 end module
