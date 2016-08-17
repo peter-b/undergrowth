@@ -21,7 +21,7 @@ use _._util
 -- public handlers
 ----------------------------------------------------------------
 
-public handler __U_Poll(in pPollInfo as List, in pTimeout as Number, \
+public handler __u_poll(in pPollInfo as List, in pTimeout as Number, \
 		out rPollResults as List) returns Boolean
 
 	return Poll(pPollInfo, pTimeout, rPollResults)
