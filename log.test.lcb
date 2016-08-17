@@ -11,8 +11,8 @@ end handler
 
 public handler TestCustomHandler()
 	-- Install a custom handler
-	variable sOldHandler as U_LogHandlerT
-	put U_SetDefaultLogHandler(TestCustomHandler_Callback) \
+	variable sOldHandler as ULogHandler
+	put u_set_default_log_handler(TestCustomHandler_Callback) \
 			into sOldHandler
 
 	-- FIXME cannot compare handlers in LCB
@@ -26,7 +26,7 @@ public handler TestCustomHandler()
 end handler
 
 public handler TestFormat()
-	U_SetDefaultLogHandler(TestCustomHandler_Callback)
+	u_set_default_log_handler(TestCustomHandler_Callback)
 
 	U_Info(["some {1}", "stuff"])
 	test "format" when sCapturedLogs is [[6, "some stuff"]]

@@ -34,26 +34,26 @@ use _._util
 -- Types
 ----------------------------------------------------------------
 
-public handler type U_LogHandlerT(in pMessage as String, \
+public handler type ULogHandler(in pMessage as String, \
 		in pLevel as Number) returns nothing
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_Debug(in pMessage as any) returns nothing
+public handler u_debug(in pMessage as any) returns nothing
 	Log(pMessage, kLogDebug)
 end handler
 
-public handler U_Info(in pMessage as any) returns nothing
+public handler u_info(in pMessage as any) returns nothing
 	Log(pMessage, kLogInfo)
 end handler
 
-public handler U_Warning(in pMessage as any) returns nothing
+public handler u_warning(in pMessage as any) returns nothing
 	Log(pMessage, kLogWarning)
 end handler
 
-public handler U_Error(in pMessage as any) returns nothing
+public handler u_error(in pMessage as any) returns nothing
 	Log(pMessage, kLogError)
 
 	-- Errors are fatal
@@ -61,7 +61,7 @@ public handler U_Error(in pMessage as any) returns nothing
 end handler
 
 -- The default handler used for outputting log messages
-public handler U_DefaultLogHandler(in pMessage as String, \
+public handler u_default_log_handler(in pMessage as String, \
 		in pLevel as Number) returns nothing
 	variable tLines as List
 	split pMessage by "\n" into tLines
@@ -75,13 +75,13 @@ end handler
 
 -- Set the default log handler, returning the previous default log
 -- handler
-public handler U_SetDefaultLogHandler(in pHandler as U_LogHandlerT) \
-		returns U_LogHandlerT
-	variable tOldHandler as optional U_LogHandlerT
+public handler u_set_default_log_handler(in pHandler as ULogHandler) \
+		returns ULogHandler
+	variable tOldHandler as optional ULogHandler
 	put sDefaultHandler into tOldHandler
 	put pHandler into sDefaultHandler
 	if tOldHandler is nothing then
-		return U_DefaultLogHandler
+		return u_default_log_handler
 	else
 		return tOldHandler
 	end if
@@ -95,7 +95,7 @@ end handler
 -- Variables
 ----------------------------------------------------------------
 
-variable sDefaultHandler as optional U_LogHandlerT
+variable sDefaultHandler as optional ULogHandler
 
 ----------------------------------------------------------------
 -- Handlers
@@ -129,7 +129,7 @@ private handler Log(in pMessage as any, in pLevel as Number) returns nothing
 	end if
 
 	if sDefaultHandler is nothing then
-		U_DefaultLogHandler(tMessage, pLevel)
+		u_default_log_handler(tMessage, pLevel)
 	else
 		sDefaultHandler(tMessage, pLevel)
 	end if
