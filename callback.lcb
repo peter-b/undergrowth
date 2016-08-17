@@ -8,13 +8,13 @@ module _.callback0
 -- Types
 ----------------------------------------------------------------
 
-public type U_CallbackT is any
+public type UCallback is any
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_CallbackDispatch(inout xCallback as U_CallbackT, \
+public handler u_callback_dispatch(inout xCallback as UCallback, \
 		inout xInfo as optional any) returns optional any
 	return Dispatch(xCallback, xInfo)
 end handler
@@ -37,7 +37,7 @@ private handler type ContextCallbackT(inout xInfo as optional any, \
 -- Handlers
 ----------------------------------------------------------------
 
-private handler Dispatch(inout xCallback as U_CallbackT, \
+private handler Dispatch(inout xCallback as UCallback, \
 		inout xInfo as optional any) returns optional any
 
 	variable tCallback as CallbackT

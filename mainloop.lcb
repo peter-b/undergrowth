@@ -25,7 +25,7 @@ public handler U_MainLoopQuit() returns nothing
 	Quit()
 end handler
 
-public handler U_MainLoopAddIdle(in pCallback as U_CallbackT) returns nothing
+public handler U_MainLoopAddIdle(in pCallback as UCallback) returns nothing
 	AddIdle(pCallback)
 end handler
 
@@ -87,7 +87,7 @@ private handler __IdlePrepare(inout xSource as SourceInfoT, \
 	return true
 end handler
 
-private handler AddIdle(in pCallback as U_CallbackT) returns nothing
+private handler AddIdle(in pCallback as UCallback) returns nothing
 	variable tSourceInfo as SourceInfoT
 	put the empty array into tSourceInfo
 	
@@ -143,7 +143,7 @@ private handler SourcePrepare(inout xSource as SourceInfoT, \
 end handler
 
 private handler SourceDispatch(inout xSource as SourceInfoT) returns Boolean
-	return U_CallbackDispatch(xSource["Callback"], xSource)
+	return u_callback_dispatch(xSource["Callback"], xSource)
 end handler
 
 ----------------------------------------------------------------
