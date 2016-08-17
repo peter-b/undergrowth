@@ -159,7 +159,7 @@ handler FormatValue(in pValue as optional any) returns String
 
 	else if pValue is a number then
 		if the trunc of pValue is pValue then
-			return __U_FormatInt(pValue)
+			return __u_format_int(pValue)
 		else
 			return pValue formatted as string
 		end if

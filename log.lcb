@@ -199,7 +199,7 @@ private handler LogColour(in pLines as List, in pLevel as Number) \
 
 	variable tLine as String
 	repeat for each element tLine in pLines
-		write __U_EncodeUTF8(tCode & tLine & kColorReset & "\n") \
+		write __u_encode_utf8(tCode & tLine & kColorReset & "\n") \
 			to the error stream
 	end repeat
 end handler
@@ -222,11 +222,11 @@ private handler LogDefault(in pLines as List, in pLevel as Number) \
 
 	-- Prefix each line with a priority tag
 	variable tTag as String
-	put "<" & __U_FormatInt(pLevel) &  ">" into tTag
+	put "<" & __u_format_int(pLevel) &  ">" into tTag
 
 	variable tLine as String
 	repeat for each element tLine in pLines
-		write __U_EncodeUTF8(tTag & tLine & "\n") to the error stream
+		write __u_encode_utf8(tTag & tLine & "\n") to the error stream
 	end repeat
 end handler
 
