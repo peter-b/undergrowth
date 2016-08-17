@@ -11,21 +11,21 @@ use _.callback0
 -- Types
 ----------------------------------------------------------------
 
-public type U_MainLoopSourceIdT is Number
+public type UMainLoopSourceId is Number
 
 ----------------------------------------------------------------
 -- Handlers
 ----------------------------------------------------------------
 
-public handler U_MainLoopRun() returns nothing
+public handler u_mainloop_run() returns nothing
 	Run()
 end handler
 
-public handler U_MainLoopQuit() returns nothing
+public handler u_mainloop_quit() returns nothing
 	Quit()
 end handler
 
-public handler U_MainLoopAddIdle(in pCallback as UCallback) returns nothing
+public handler u_mainloop_add_idle(in pCallback as UCallback) returns nothing
 	AddIdle(pCallback)
 end handler
 

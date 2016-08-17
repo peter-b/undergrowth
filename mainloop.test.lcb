@@ -6,14 +6,14 @@ use _.mainloop0
 private variable sTestIdleVar
 private handler TestIdle_Callback(inout xSource)
 	put true into sTestIdleVar
-	U_MainLoopQuit()
+	u_mainloop_quit()
 	return false
 end handler
 
 public handler TestIdle()
 	put false into sTestIdleVar
-	U_MainLoopAddIdle(TestIdle_Callback)
-	U_MainLoopRun()
+	u_mainloop_add_idle(TestIdle_Callback)
+	u_mainloop_run()
 	test "idle" when sTestIdleVar
 end handler
 
